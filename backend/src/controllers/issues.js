@@ -1,7 +1,11 @@
 const issues = []
 
 const getAllIssues = (req, res) => {
-    res.json(issues)
+    const { category, status } = req.query
+    let result = issues 
+    if (category) result = result.filter(i => i.category === category)
+    if (status) result = result.filter(i => i.status === status)
+    res.json(result)
 }
 
 const getIssueById = (req, res) => {
