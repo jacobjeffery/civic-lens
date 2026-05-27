@@ -1,3 +1,50 @@
+# Setup
+
+## Prerequisites
+- Node.js
+- PostgreSQL (locally installed and running)
+
+## Install PostgreSQL (macOS, Homebrew)
+```bash
+brew install postgresql
+brew services start postgresql
+```
+
+Verify it's running:
+```bash
+psql --version
+```
+
+## Create the database
+Connect to Postgres using your macOS username (Homebrew Postgres uses your OS user as the default role):
+```bash
+psql -U $(whoami) postgres
+```
+
+At the `postgres=#` prompt:
+```sql
+CREATE DATABASE civiclens;
+\q
+```
+
+## Configure environment variables
+Copy the example file and fill in your values:
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and set `DB_USER` to your Postgres user (your macOS username if you installed via Homebrew). Leave `DB_PASSWORD` empty for local Homebrew installs.
+
+## Install dependencies and run
+```bash
+npm install
+npm run dev
+```
+
+The server should print `[server] listening on 127.0.0.1:4000`.
+
+---
+
 # Starting a server
 - within your project folder:
 - use `npm init` or `npm init -y` to create a project
