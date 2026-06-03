@@ -1,5 +1,6 @@
 require("dotenv").config()
 require("./src/models/issues")
+require("./src/models/users")
 const app = require("./src/app")
 const sequelize = require("./src/config/database")
 

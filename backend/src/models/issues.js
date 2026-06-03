@@ -8,6 +8,11 @@ const Issue = sequelize.define("Issue", {
         autoIncrement: true
     },
 
+    userId: {
+        type:DataTypes.INTEGER,
+        allowNull: false
+    },
+
     title: {
         type: DataTypes.STRING,
         allowNull: false
@@ -33,5 +38,9 @@ const Issue = sequelize.define("Issue", {
         defaultValue: 0
     }
 })
+
+const User = require("./users")
+Issue.belongsTo(User, { foreignKey: "userId" })
+User.hasMany(Issue, { foreignKey: "userId"})
 
 module.exports = Issue

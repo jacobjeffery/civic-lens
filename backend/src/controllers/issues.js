@@ -13,6 +13,14 @@ const getAllIssues = async (req, res) => {
     res.json(issues)
 }
 
+const getMyIssues = async (req, res) => {
+    const issues = await Issue.findAll({
+        where:{ 
+            userId: req.user.id
+        } })
+    res.json(issues)
+}
+
 const getIssueById = async (req, res) => {
     const id = parseInt(req.params.id)
     const issue = await Issue.findByPk(id)
@@ -24,14 +32,19 @@ const getIssueById = async (req, res) => {
     res.json(issue)
 }
 
-const deleteIssue = async (req,res) => {
+const deleteIssue = async (req, res) => {
     const id = parseInt(req.params.id)
-    const deleted = await Issue.destroy({ where: { id } })
-    
-    if (deleted === 0) {
-        return res.status(404).json({ error: "Issue not found"})
+    const issue = await Issue.findByPk(id)
+
+    if (!issue) {
+        return res.status(404).json({ error: "Issue not found" })
     }
-    
+
+    if (issue.userId !== req.user.id) {
+        return res.status(403).json({ error: "Forbidden" })
+    }
+
+    await issue.destroy()
     res.status(204).send()
 }
 
@@ -45,24 +58,28 @@ const updateIssue = async (req, res) => {
         return res.status(404).json({ error: "Issue not found" })
     }
 
+    if (issue.userId !== req.user.id) {
+        return res.status(403).json({ error: "Forbidden"})
+    }
+
     const { title, description, category, status } = req.body
     
     const updates  = {}
-    if (title !== undefined) issue.title = title
-    if (description !== undefined) issue.description = description
-    if (category !== undefined) issue.category = category
-    if (status !== undefined) issue.status = status
+    if (title !== undefined) updates.title = title
+    if (description !== undefined) updates.description = description
+    if (category !== undefined) updates.category = category
+    if (status !== undefined) updates.status = status
 
     await issue.update(updates)
     res.json(issue)
 }
 
 const createIssue = async (req,res) => {
-    const { title, description, category, status } = req.body
+    const { title, description, category } = req.body
     
     if (!title || !description || !category) {
         return res.status(400).json({
-            error: "title, description, category and status are required"
+            error: "title, description and category are required"
         })
     }
 
@@ -70,6 +87,7 @@ const createIssue = async (req,res) => {
         title,
         description,
         category,
+        userId: req.user.id
     })
 
     res.status(201).json(newIssue)
@@ -81,6 +99,7 @@ const createIssue = async (req,res) => {
 
 module.exports = {
     getAllIssues,
+    getMyIssues,
     createIssue,
     getIssueById,
     updateIssue,

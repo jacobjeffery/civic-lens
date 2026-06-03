@@ -1,12 +1,14 @@
 const express = require("express")
 const router = express.Router()
+const authMiddleware = require("../middleware/auth")
 
-const { getAllIssues, createIssue, getIssueById, updateIssue, deleteIssue } = require("../controllers/issues")
+const { getAllIssues, getMyIssues, createIssue, getIssueById, updateIssue, deleteIssue } = require("../controllers/issues")
 
 router.get("/", getAllIssues)
+router.get("/mine", authMiddleware, getMyIssues)
 router.get("/:id", getIssueById)
-router.post("/", createIssue)
-router.put("/:id", updateIssue)
-router.delete("/:id", deleteIssue)
-module.exports = router
+router.post("/", authMiddleware, createIssue)
+router.put("/:id", authMiddleware, updateIssue)
+router.delete("/:id", authMiddleware, deleteIssue)
 
+module.exports = router

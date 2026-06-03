@@ -1,0 +1,141 @@
+@baseUrl = http://127.0.0.1:4000
+
+### --- AUTH ---
+
+### Register a new user
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "jake@example.com",
+  "password": "test123"
+}
+
+### Login (token is captured for reuse below)
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "jake@example.com",
+  "password": "test123"
+}
+
+### Register a second user (for ownership tests)
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "other@example.com",
+  "password": "test123"
+}
+
+### Login as second user
+# @name loginOther
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "other@example.com",
+  "password": "test123"
+}
+
+
+### --- ISSUES (public) ---
+
+### List all issues
+GET {{baseUrl}}/issues
+
+### Filter by category
+GET {{baseUrl}}/issues?category=roads
+
+### Filter by status
+GET {{baseUrl}}/issues?status=open
+
+### Filter by both
+GET {{baseUrl}}/issues?category=roads&status=open
+
+### Get one issue by id
+GET {{baseUrl}}/issues/1
+
+
+### --- ISSUES (auth required) ---
+
+### Get my issues
+GET {{baseUrl}}/issues/mine
+Authorization: Bearer {{login.response.body.token}}
+
+### Create an issue
+POST {{baseUrl}}/issues
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "title": "Pothole on 5th Ave",
+  "description": "Big one, swerving traffic",
+  "category": "roads"
+}
+
+### Update an issue (replace 1 with an id you own)
+PUT {{baseUrl}}/issues/1
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "status": "closed"
+}
+
+### Delete an issue (replace 1 with an id you own)
+DELETE {{baseUrl}}/issues/1
+Authorization: Bearer {{login.response.body.token}}
+
+
+### --- NEGATIVE TESTS ---
+
+### Missing token (expect 401)
+POST {{baseUrl}}/issues
+Content-Type: application/json
+
+{
+  "title": "no token",
+  "description": "should fail",
+  "category": "test"
+}
+
+### Bad token (expect 401)
+POST {{baseUrl}}/issues
+Authorization: Bearer not.a.real.token
+Content-Type: application/json
+
+{
+  "title": "bad token",
+  "description": "should fail",
+  "category": "test"
+}
+
+### Missing required field (expect 400)
+POST {{baseUrl}}/issues
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "title": "incomplete"
+}
+
+### Update someone else's issue (expect 403)
+PUT {{baseUrl}}/issues/1
+Authorization: Bearer {{loginOther.response.body.token}}
+Content-Type: application/json
+
+{
+  "status": "closed"
+}
+
+### Update a non-existent issue (expect 404)
+PUT {{baseUrl}}/issues/99999
+Authorization: Bearer {{login.response.body.token}}
+Content-Type: application/json
+
+{
+  "status": "closed"
+}
