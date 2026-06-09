@@ -17,10 +17,12 @@ const getAllIssues = async (req, res) => {
 }
 
 const getMyIssues = async (req, res) => {
-    const issues = await Issue.findAll({
-        where:{ 
-            userId: req.user.id
-        } })
+    const { category, status } = req.query
+    const where = { userId: req.user.id }
+    if (category) where.category = category
+    if (status) where.status = status
+
+    const issues = await Issue.findAll({ where })
     res.json(issues)
 }
 

@@ -1,12 +1,22 @@
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
-import { getAll } from "../services/issues"
+import { getAll, getMine } from "../services/issues"
+import { getAll as getCategories } from "../services/categories"
+import { isLoggedIn } from "../services/auth"
 
 function IssueListPage() {
     const [issues, setIssues] = useState([])
+    const [categories, setCategories] = useState([])
     const [category, setCategory] = useState("")
     const [status, setStatus] = useState("")
+    const [mine, setMine] = useState(false)
     const [error, setError] = useState("")
+
+    const loggedIn = isLoggedIn()
+
+    useEffect(() => {
+        getCategories().then(setCategories)
+    }, [])
 
     useEffect(() => {
         const fetchIssues = async () => {
@@ -14,55 +24,109 @@ function IssueListPage() {
                 const params = {}
                 if (category) params.category = category
                 if (status) params.status = status
-                const data = await getAll(params)
+                const data = mine ? await getMine(params) : await getAll(params)
                 setIssues(data)
             } catch (err) {
                 setError("Failed to load issues")
             }
         }
         fetchIssues()
-    }, [category, status])
+    }, [category, status, mine])
 
     return (
-        <div>
-            <h2>Issues</h2>
+        <div className="container mt-4">
+            <h2 className="mb-3">Issues</h2>
 
-            <div>
-                <label htmlFor="category">Category</label>
-                <input
-                    id="category"
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                />
+            <div className="row g-2 mb-3 align-items-center">
+                <div className="col-sm-4">
+                    <select
+                        id="category"
+                        className="form-select"
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value)}
+                    >
+                        <option value="">All categories</option>
+                        {categories.map((c) => (
+                            <option key={c} value={c}>{c}</option>
+                        ))}
+                    </select>
+                </div>
 
-                <label htmlFor="status">Status</label>
-                <select
-                    id="status"
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value)}
-                >
-                    <option value="">Any</option>
-                    <option value="open">Open</option>
-                    <option value="closed">Closed</option>
-                </select>
+                <div className="col-sm-4">
+                    <select
+                        id="status"
+                        className="form-select"
+                        value={status}
+                        onChange={(e) => setStatus(e.target.value)}
+                    >
+                        <option value="">Any status</option>
+                        <option value="open">Open</option>
+                        <option value="closed">Closed</option>
+                    </select>
+                </div>
+
+                {loggedIn && (
+                    <div className="col-sm-4">
+                        <div className="form-check form-switch">
+                            <input
+                                id="mine"
+                                type="checkbox"
+                                role="switch"
+                                className="form-check-input"
+                                checked={mine}
+                                onChange={(e) => setMine(e.target.checked)}
+                            />
+                            <label htmlFor="mine" className="form-check-label">
+                                Only mine
+                            </label>
+                        </div>
+                    </div>
+                )}
             </div>
 
-            {error && <p style={{ color: "red" }}>{error}</p>}
+            {error && <p className="text-danger">{error}</p>}
 
             {issues.length === 0 ? (
-                <p>No issues found.</p>
+                <p className="text-muted">No issues found.</p>
             ) : (
-                <ul>
-                    {issues.map((issue) => (
-                        <li key={issue.id}>
-                            <Link to={`/issues/${issue.id}`}>
-                                {issue.title}
-                            </Link>
-                            {" — "}
-                            {issue.category} / {issue.status}
-                        </li>
-                    ))}
-                </ul>
+                <div className="table-responsive">
+                    <table className="table table-striped table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Category</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {issues.map((issue) => (
+                                <tr key={issue.id}>
+                                    <td>
+                                        <Link to={`/issues/${issue.id}`}>
+                                            {issue.title}
+                                        </Link>
+                                    </td>
+                                    <td>{issue.category}</td>
+                                    <td>
+                                        <span
+                                            className={`badge ${
+                                                issue.status === "open"
+                                                    ? "bg-success"
+                                                    : "bg-secondary"
+                                            }`}
+                                        >
+                                            {issue.status}
+                                        </span>
+                                    </td>
+                                    <td className="text-muted">
+                                        {new Date(issue.createdAt).toLocaleDateString()}
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             )}
         </div>
     )

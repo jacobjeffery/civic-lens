@@ -20,33 +20,37 @@ function RegisterPage() {
     }
 
     return (
-        <div>
+        <div className="container mt-4" style={{ maxWidth: 400 }}>
             <h2>Register</h2>
 
             <form onSubmit={handleSubmit}>
-                <div>
-                    <label htmlFor="email">Email</label>
+                <div className="form-floating mb-3">
                     <input
                         id="email"
                         type="email"
+                        className="form-control"
+                        placeholder="Email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                     />
+                    <label htmlFor="email">Email</label>
                 </div>
 
-                <div>
-                    <label htmlFor="password">Password</label>
+                <div className="form-floating mb-3">
                     <input
                         id="password"
                         type="password"
+                        className="form-control"
+                        placeholder="Password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                     />
+                    <label htmlFor="password">Password</label>
                 </div>
 
-                {error && <p style={{ color: "red" }}>{error}</p>}
+                {error && <p className="text-danger">{error}</p>}
 
-                <button type="submit">Register</button>
+                <button type="submit" className="btn btn-primary">Register</button>
             </form>
         </div>
     )

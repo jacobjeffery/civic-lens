@@ -17,17 +17,20 @@ function Nav() {
     }
 
     return (
-        <nav>
-            <Link to="/">Issues</Link>
-            {loggedIn && <> | <Link to="/issues/new">New Issue</Link></>}
-            {loggedIn ? (
-                <> | <button onClick={handleLogout}>Logout</button></>
-            ) : (
-                <>
-                    {" | "}<Link to="/login">Login</Link>
-                    {" | "}<Link to="/register">Register</Link>
-                </>
-            )}
+        <nav className="navbar navbar-expand bg-light px-3">
+            <Link to="/" className="navbar-brand">CivicLens</Link>
+            <div className="navbar-nav">
+                <Link to="/" className="nav-link">Issues</Link>
+                {loggedIn && <Link to="/issues/new" className="nav-link">New Issue</Link>}
+                {loggedIn ? (
+                    <button onClick={handleLogout} className="btn btn-link nav-link">Logout</button>
+                ) : (
+                    <>
+                        <Link to="/login" className="nav-link">Login</Link>
+                        <Link to="/register" className="nav-link">Register</Link>
+                    </>
+                )}
+            </div>
         </nav>
     )
 }

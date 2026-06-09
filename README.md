@@ -3,7 +3,6 @@
 A full-stack community-issue tracker built as a Codecademy bootcamp capstone. Users can report and discuss local issues (potholes, broken streetlights, graffiti, etc.).
 
 **Live:** https://civic-lens.fly.dev/
-**Repo:** https://github.com/jacobjeffery/civic-lens
 
 ---
 
@@ -12,12 +11,15 @@ A full-stack community-issue tracker built as a Codecademy bootcamp capstone. Us
 | Layer | Tech |
 |---|---|
 | Frontend | React 19 + Vite + react-router-dom + axios |
+| Styling | Bootstrap 5 (vanilla classes, no React-Bootstrap wrapper) |
 | Backend | Node + Express + Sequelize |
 | Database | PostgreSQL (Neon-hosted in prod, local Homebrew Postgres in dev) |
 | Auth | bcrypt + JWT (stored client-side in `localStorage`) |
 | Web server | Caddy (serves static frontend, proxies `/api/*` to the backend) |
 | Container | Docker (multi-stage build) |
 | Hosting | Fly.io |
+| Tests | Jest + Supertest (backend smoke tests) |
+| CI/CD | GitHub Actions — run tests, then `fly deploy` on push to main |
 
 ---
 
@@ -25,27 +27,44 @@ A full-stack community-issue tracker built as a Codecademy bootcamp capstone. Us
 
 ```
 civic-lens/
-├── backend/                    Express API
+├── .github/workflows/
+│   └── fly-deploy.yml             Two-stage CI: backend tests → fly deploy
+├── backend/                       Express API
 │   ├── src/
-│   │   ├── config/database.js  Sequelize connection (uses DATABASE_URL in prod)
-│   │   ├── controllers/        issues.js, auth.js
-│   │   ├── middleware/auth.js  JWT verification
-│   │   ├── models/             Issue, User
-│   │   ├── routes/             /issues, /auth
+│   │   ├── config/database.js     Sequelize connection (DATABASE_URL in prod, DB_* vars locally)
+│   │   ├── constants/categories.js Canonical list of issue categories
+│   │   ├── controllers/           issues.js, auth.js
+│   │   ├── middleware/auth.js     JWT verification
+│   │   ├── models/                Issue, User
+│   │   ├── routes/                /issues (incl. /mine, /categories), /auth
 │   │   └── app.js
-│   ├── server.js               Entry point (loads dotenv, syncs DB, starts listening)
-│   └── requests.http           VS Code REST Client test scenarios
-├── frontend/                   Vite + React
+│   ├── tests/api.test.js          Backend smoke tests
+│   ├── server.js                  Entry point (loads .env or .env.test, syncs DB, listens)
+│   └── requests.http              VS Code REST Client test scenarios
+├── frontend/                      Vite + React
 │   └── src/
-│       ├── pages/              Login, Register, IssueList, IssueDetail, CreateIssue
-│       ├── components/         ProtectedRoute, Nav (in App.jsx)
-│       └── services/           api.js, auth.js, issues.js
-├── Dockerfile                  Multi-stage build: frontend build → runtime image
-├── Caddyfile                   Reverse proxy + static file serving
-├── start.sh                    Launches node + caddy in the container
-├── fly.toml                    Fly app config
-└── civic-lens.md               Original assignment spec (6 phases)
+│       ├── pages/                 Login, Register, IssueList, IssueDetail, CreateIssue
+│       ├── components/            ProtectedRoute (Nav lives in App.jsx)
+│       └── services/              api.js, auth.js, issues.js, categories.js
+├── Dockerfile                     Multi-stage build: frontend build → runtime image
+├── Caddyfile                      Reverse proxy + static file serving
+├── start.sh                       Launches node + caddy in the container
+├── fly.toml                       Fly app config
+└── civic-lens.md                  Original assignment spec (6 phases)
 ```
+
+---
+
+## Features
+
+- **Auth** — register, login, JWT-based session, logout
+- **Issues** — list, view, create, update, delete with ownership enforcement
+- **Filtering** — by category and status; combinable
+- **My Issues toggle** — switch the list to only the logged-in user's issues
+- **Category enum** — backend enforces a canonical list (`backend/src/constants/categories.js`); frontend fetches it from `/issues/categories`
+- **Protected routes** — `/issues/new` redirects unauthenticated users to `/login`
+- **Conditional nav** — Login/Register hidden when authenticated; Logout shown
+- **Responsive UI** — Bootstrap forms with floating labels, table view with status badges, mobile-friendly grid
 
 ---
 
@@ -55,6 +74,7 @@ civic-lens/
 - Node.js 20+
 - PostgreSQL running locally (`brew install postgresql && brew services start postgresql`)
 - A `civiclens` database (`createdb civiclens` or via `psql -U $(whoami) postgres` then `CREATE DATABASE civiclens;`)
+- A `civiclens_test` database for the test suite (`CREATE DATABASE civiclens_test;`)
 
 ### Backend
 ```bash
@@ -73,7 +93,15 @@ npm run dev                # listens on 127.0.0.1:5173
 
 Visit http://localhost:5173.
 
-### Testing endpoints
+### Running tests
+```bash
+cd backend
+npm test
+```
+
+Runs five smoke tests against `civiclens_test`. The schema is wiped (`sync({ force: true })`) before each run, so the suite is idempotent.
+
+### Testing endpoints manually
 `backend/requests.http` — open in VS Code with the **REST Client** extension; click "Send Request" above any block. Token from login is captured automatically and reused on protected requests.
 
 ---
@@ -108,6 +136,20 @@ A single Fly machine runs **both** Node (backend) and Caddy (reverse proxy + sta
 
 ---
 
+## CI/CD
+
+GitHub Actions runs on every push to `main`:
+
+1. **Test job** — spins up a Postgres 16 service container, installs backend deps, writes a temp `.env.test`, runs `npm test`. If any test fails, the workflow stops here.
+2. **Deploy job** — `flyctl deploy --remote-only`. Only runs if the test job passed.
+
+Workflow: [`.github/workflows/fly-deploy.yml`](.github/workflows/fly-deploy.yml).
+
+Secrets needed in the GitHub repo (Settings → Secrets and variables → Actions):
+- `FLY_API_TOKEN` — generated via `fly tokens create deploy`
+
+---
+
 ## Deployment
 
 ### One-time setup
@@ -127,6 +169,7 @@ fly secrets set --stage \
 ```
 
 ### Subsequent deploys
+A push to `main` triggers GitHub Actions. To deploy manually:
 ```bash
 fly deploy
 ```
@@ -201,6 +244,24 @@ After the initial `fly deploy`, even `--no-cache` deploys produced the same bund
 
 **Lesson:** Vite bundle hash is content-derived; if the source code doesn't change, the hash doesn't either, even after `rm -rf dist`. The proof that `define` wasn't working came from `grep`-ing the bundle for the URL, not from rebuilding.
 
+### 7. Floating labels needed the right child order and a placeholder
+
+Bootstrap's `form-floating` uses CSS sibling selectors and `:placeholder-shown` to detect focus and emptiness. Two non-obvious requirements:
+
+- **Input must come before label** in the markup. Reverse them and the float animation doesn't fire.
+- **Every input needs a `placeholder` attribute** (even a single character). Without it, `:placeholder-shown` is always false and the label stays floated up even when the field is empty.
+
+### 8. Category enum drift after switching to a canonical list
+
+After introducing `backend/src/constants/categories.js` with capitalized names ("Roads", "Streetlights", etc.), existing rows that had lowercase categories ("roads") still rendered fine on read but caused tests and writes to fail validation. The schema didn't change — the validator was added in-app — but the data didn't match.
+
+**Fix:** truncate the affected tables and start fresh:
+```bash
+psql "<DATABASE_URL>" -c 'TRUNCATE "Issues" RESTART IDENTITY CASCADE;'
+```
+
+Lesson: when introducing data-shape constraints to an existing app, decide upfront whether to enforce in DB (with a migration) or in app code (with a one-off cleanup). I went with app-level validation (`Sequelize`'s `validate.isIn`) + manual cleanup.
+
 ---
 
 ## What I'd do differently next time
@@ -208,4 +269,5 @@ After the initial `fly deploy`, even `--no-cache` deploys produced the same bund
 - **Set up build-time env injection from day one**, even if it's just a `.env.production` file. Adding it later means discovering bundler quirks under deployment pressure.
 - **Add CORS earlier.** I removed `app.use(cors())` from `backend/src/app.js` during cleanup (it was unused while the frontend didn't exist yet) and forgot it. Wasted time debugging "no token" when the actual error was CORS-failed during cross-origin preflight in local dev.
 - **Use Docker Compose for local dev with Postgres in a container.** Would have made the "swap from local Postgres to Neon" transition more obvious — same connection string pattern in both environments.
-- **Wire up at least one smoke test in CI before deploying.** A 30-second test that hits `/auth/register` and `/issues` would have caught the production-URL bug long before I noticed it manually.
+- **Write the test suite before the deployment hurdles.** I added Jest + Supertest in Phase 6 — after CI was already deploying without checks. Having even one smoke test from day one would have caught the production-URL bug before manual verification did.
+- **Treat constants as schema.** I introduced the categories list mid-project and had to clean up existing data. Defining enums (even loose, app-level ones) up front keeps the schema consistent with the validators.

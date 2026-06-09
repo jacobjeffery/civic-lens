@@ -10,8 +10,8 @@ export const getById = async (id) => {
     return response.data
 }
 
-export const getMine = async () => {
-    const response = await api.get("/issues/mine")
+export const getMine = async (params) => {
+    const response = await api.get("/issues/mine", { params })
     return response.data
 }
 
