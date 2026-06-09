@@ -16,7 +16,7 @@ export const getMine = async (params) => {
 }
 
 export const create = async (issue) => {
-    const response =  await api.post("/issues", issue)
+    const response = await api.post("/issues", issue)
     return response.data
 }
 
@@ -27,5 +27,15 @@ export const update = async (id, updates) => {
 
 export const remove = async (id) => {
     const response = await api.delete(`/issues/${id}`)
+    return response.data
+}
+
+export const vote = async (id) => {
+    const response = await api.post(`/issues/${id}/vote`)
+    return response.data
+}
+
+export const unvote = async (id) => {
+    const response = await api.delete(`/issues/${id}/vote`)
     return response.data
 }

@@ -34,9 +34,9 @@ civic-lens/
 │   │   ├── config/database.js     Sequelize connection (DATABASE_URL in prod, DB_* vars locally)
 │   │   ├── constants/categories.js Canonical list of issue categories
 │   │   ├── controllers/           issues.js, auth.js
-│   │   ├── middleware/auth.js     JWT verification
-│   │   ├── models/                Issue, User
-│   │   ├── routes/                /issues (incl. /mine, /categories), /auth
+│   │   ├── middleware/            auth.js (required), optionalAuth.js (sets req.user if token present, no rejection)
+│   │   ├── models/                Issue, User, Vote
+│   │   ├── routes/                /issues (incl. /mine, /categories, /:id/vote), /auth
 │   │   └── app.js
 │   ├── tests/api.test.js          Backend smoke tests
 │   ├── server.js                  Entry point (loads .env or .env.test, syncs DB, listens)
@@ -59,6 +59,8 @@ civic-lens/
 
 - **Auth** — register, login, JWT-based session, logout
 - **Issues** — list, view, create, update, delete with ownership enforcement
+- **Open/close lifecycle** — owners can close (and reopen) their own issues without deleting them
+- **Voting** — any logged-in user can vote on an issue once; clicking again removes the vote. Enforced by a unique constraint in the `Votes` table.
 - **Filtering** — by category and status; combinable
 - **My Issues toggle** — switch the list to only the logged-in user's issues
 - **Category enum** — backend enforces a canonical list (`backend/src/constants/categories.js`); frontend fetches it from `/issues/categories`
@@ -261,6 +263,16 @@ psql "<DATABASE_URL>" -c 'TRUNCATE "Issues" RESTART IDENTITY CASCADE;'
 ```
 
 Lesson: when introducing data-shape constraints to an existing app, decide upfront whether to enforce in DB (with a migration) or in app code (with a one-off cleanup). I went with app-level validation (`Sequelize`'s `validate.isIn`) + manual cleanup.
+
+---
+
+## Future work / known gaps
+
+- **Admin users and roles.** Currently authorization is binary — you either own a resource or you don't. A real civic app would have moderators (close anyone's issue, edit miscategorized ones) and admins (delete users, manage the category list). That'd need a `role` field on the User model, role-aware middleware, and a way to manage roles. Worth doing alongside an `/admin` page that lists pending moderation work.
+- **Issue comments.** No discussion thread yet. Would need a `Comment` model with `userId` + `issueId`, plus UI on the detail page.
+- **Reverse-chronological ordering by default.** The issues list currently shows oldest first because that's Postgres's natural insertion order. Newer-first would need an `order: [["createdAt", "DESC"]]` on the `findAll` calls.
+- **Pagination.** All issues are returned in one response — fine at 32 rows, ugly at 3,200. Would need offset/limit query params and frontend pagination controls.
+- **Hide the Delete button for non-owners.** Currently the detail page only shows it to owners (since #2026-06-09 refactor), but anonymous viewers can still try via the API (and get a 401). Could simplify the API by making the route ownership-aware.
 
 ---
 
