@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { create } from "../services/issues"
-import { getAll as getCategories } from "../services/issues"
+import { getAll as getCategories } from "../services/categories"
 
 function CreateIssuePage() {
     const [title, setTitle] = useState("")
@@ -12,7 +12,7 @@ function CreateIssuePage() {
 
     useEffect(() => {
         getCategories().then(setCategories)
-    })
+    }, [])
     
     const navigate = useNavigate()
 
