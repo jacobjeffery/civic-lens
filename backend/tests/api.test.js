@@ -63,10 +63,26 @@ describe("issues", () => {
         const res = await request(app)
             .post("/issues")
             .set("Authorization", `Bearer ${token}`)
-            .send({ title: "Pothole", description: "Big one", category: "roads" })
+            .send({ title: "Pothole", description: "Big one", category: "Roads" })
 
         expect(res.status).toBe(201)
         expect(res.body.title).toBe("Pothole")
         expect(res.body.userId).toBeDefined()
     })
+
+    test("POST /issues with invalid category returns 400", async () => {
+        const res = await request(app)
+            .post("/issues")
+            .set("Authorization", `Bearer ${token}`)
+            .send({ title: "x", description: "x", category: "garbage" })
+
+        expect(res.status).toBe(400)
+    })
+
+    test("GET /issues/categories returns the list", async () => {
+    const res = await request(app).get("/issues/categories")
+
+    expect(res.status).toBe(200)
+    expect(res.body).toContain("Roads")
+})
 })

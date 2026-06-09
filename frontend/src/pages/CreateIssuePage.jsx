@@ -1,13 +1,19 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { create } from "../services/issues"
+import { getAll as getCategories } from "../services/issues"
 
 function CreateIssuePage() {
     const [title, setTitle] = useState("")
     const [description, setDescription] = useState("")
     const [category, setCategory] = useState("")
     const [error, setError] = useState("")
+    const [categories, setCategories] = useState([])
 
+    useEffect(() => {
+        getCategories().then(setCategories)
+    })
+    
     const navigate = useNavigate()
 
     const handleSubmit = async (e) => {
@@ -45,11 +51,16 @@ function CreateIssuePage() {
 
                 <div>
                     <label htmlFor="category">Category</label>
-                    <input
+                    <select
                         id="category"
                         value={category}
                         onChange={(e) => setCategory(e.target.value)}
-                    />
+                >
+                    <option value="">Select a category</option>
+                    {categories.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                    ))}
+                    </select>
                 </div>
 
                 {error && <p style={{ color: "red" }}>{error}</p>}

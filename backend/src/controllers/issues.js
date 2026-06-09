@@ -1,6 +1,9 @@
 const Issue = require("../models/issues")
-// const issues = []
+const CATEGORIES = require("../constants/categories")
 
+const getCategories = (req, res) => {
+    res.json(CATEGORIES)
+}
 
 const getAllIssues = async (req, res) => {
     const { category, status } = req.query
@@ -83,6 +86,10 @@ const createIssue = async (req,res) => {
         })
     }
 
+    if (!CATEGORIES.includes(category)) {
+        return res.status(400).json({ error: "Invalid category" })
+    }
+
     const newIssue = await Issue.create({
         title,
         description,
@@ -103,5 +110,6 @@ module.exports = {
     createIssue,
     getIssueById,
     updateIssue,
-    deleteIssue
+    deleteIssue,
+    getCategories
 } 

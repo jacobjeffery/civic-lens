@@ -1,5 +1,6 @@
 const { DataTypes } = require("sequelize")
 const sequelize = require("../config/database")
+const CATEGORIES = require("../constants/categories")
 
 const Issue = sequelize.define("Issue", {
     id: {
@@ -25,7 +26,13 @@ const Issue = sequelize.define("Issue", {
 
     category: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: false,
+        validate: {
+            isIn: {
+                args: [CATEGORIES],
+                msg: "Invalid category"
+            }
+        }
     },
 
     status: {
