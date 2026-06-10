@@ -268,6 +268,7 @@ Lesson: when introducing data-shape constraints to an existing app, decide upfro
 
 ## Future work / known gaps
 
+- **Cold start on first visit.** `fly.toml` has `min_machines_running = 0`, so Fly auto-stops the machines after idle. The first request after a quiet period takes ~5–15 seconds while a machine wakes up, and the page may render empty during the hang. A refresh always works. The fix is `min_machines_running = 1` (keeps one machine warm 24/7); left at 0 deliberately to stay safely inside the free tier.
 - **Admin users and roles.** Currently authorization is binary — you either own a resource or you don't. A real civic app would have moderators (close anyone's issue, edit miscategorized ones) and admins (delete users, manage the category list). That'd need a `role` field on the User model, role-aware middleware, and a way to manage roles. Worth doing alongside an `/admin` page that lists pending moderation work.
 - **Issue comments.** No discussion thread yet. Would need a `Comment` model with `userId` + `issueId`, plus UI on the detail page.
 - **Reverse-chronological ordering by default.** The issues list currently shows oldest first because that's Postgres's natural insertion order. Newer-first would need an `order: [["createdAt", "DESC"]]` on the `findAll` calls.
