@@ -27,45 +27,49 @@ function CreateIssuePage() {
     }
 
     return (
-        <div>
-            <h2>New Issue</h2>
+        <div className="container mt-4" style={{ maxWidth: 720 }}>
+            <h2 className="mb-3">New Issue</h2>
 
             <form onSubmit={handleSubmit}>
-                <div>
-                    <label htmlFor="title">Title</label>
+                <div className="mb-3">
+                    <label htmlFor="title" className="form-label">Title</label>
                     <input
                         id="title"
+                        className="form-control"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
                     />
                 </div>
 
-                <div>
-                    <label htmlFor="description">Description</label>
+                <div className="mb-3">
+                    <label htmlFor="description" className="form-label">Description</label>
                     <textarea
                         id="description"
+                        className="form-control"
+                        rows={5}
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                     />
                 </div>
 
-                <div>
-                    <label htmlFor="category">Category</label>
+                <div className="mb-3">
+                    <label htmlFor="category" className="form-label">Category</label>
                     <select
                         id="category"
+                        className="form-select"
                         value={category}
                         onChange={(e) => setCategory(e.target.value)}
-                >
-                    <option value="">Select a category</option>
-                    {categories.map((c) => (
-                        <option key={c} value={c}>{c}</option>
-                    ))}
+                    >
+                        <option value="">Select a category</option>
+                        {categories.map((c) => (
+                            <option key={c} value={c}>{c}</option>
+                        ))}
                     </select>
                 </div>
 
-                {error && <p style={{ color: "red" }}>{error}</p>}
+                {error && <p className="text-danger">{error}</p>}
 
-                <button type="submit">Create</button>
+                <button type="submit" className="btn btn-primary">Create</button>
             </form>
         </div>
     )

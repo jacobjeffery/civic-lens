@@ -87,7 +87,7 @@ function IssueListPage() {
             {error && <p className="text-danger">{error}</p>}
 
             {issues.length === 0 ? (
-                <p className="text-muted">No issues found.</p>
+                <p className="text-muted">No issues found or you just need to refresh it because Jake is too cheap to pay for additional usage on this deployment.</p>
             ) : (
                 <div className="table-responsive">
                     <table className="table table-striped table-hover align-middle">
